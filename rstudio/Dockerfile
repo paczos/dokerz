@@ -53,3 +53,44 @@ RUN install2.r  \
     --deps TRUE \
     urca timeSeries fBasics
 RUN installGithub.r 42n4/fUnitRoots
+RUN apt-get install -y freeglut3 freeglut3-dev libglew-dev libglu1-mesa libglu1-mesa-dev libgl1-mesa-glx libgl1-mesa-dev
+RUN install2.r  \
+    --deps TRUE \
+    rgl
+## Clean up from R source install
+RUN cd / \
+  && BUILDDEPS="curl \
+    default-jdk \
+    libbz2-dev \
+    libcairo2-dev \
+    libcurl4-openssl-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libicu-dev \
+    libpcre3-dev \
+    libpng-dev \
+    libreadline-dev \
+    libtiff5-dev \
+    liblzma-dev \
+    libx11-dev \
+    libxt-dev \
+    perl \
+    subversion \
+    tcl8.5-dev \
+    tk8.5-dev \
+    texinfo \
+    texlive-extra-utils \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    texlive-latex-recommended \
+    x11proto-core-dev \
+    xauth \
+    xfonts-base \
+    xvfb \
+    zlib1g-dev" \
+&& rm -rf /tmp/* \
+&& apt-get remove --purge -y $BUILDDEPS \
+&& apt-get autoremove -y \
+&& apt-get autoclean -y \
+&& rm -rf /var/lib/apt/lists/*
+
