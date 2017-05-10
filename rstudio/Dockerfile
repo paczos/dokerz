@@ -41,7 +41,6 @@ RUN install2.r  \
     klaR	\
     caret	\
     tseries	\
-#    fUnitRoots	\
     forecast	\
     sets	\
     TTR
@@ -50,4 +49,7 @@ RUN installGithub.r 42n4/tkrplot
 RUN install2.r  \
     --deps TRUE \
     ade4
+RUN install2.r  \
+    --deps TRUE \
+    urca timeSeries fBasics
 RUN installGithub.r 42n4/fUnitRoots
