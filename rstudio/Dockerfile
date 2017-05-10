@@ -57,6 +57,9 @@ RUN apt-get install -y freeglut3 freeglut3-dev libglew-dev libglu1-mesa libglu1-
 RUN install2.r  \
     --deps TRUE \
     rgl
+RUN install2.r  \
+    --deps TRUE \
+    nnet
 ## Clean up from R source install
 RUN cd / \
   && BUILDDEPS="curl \
