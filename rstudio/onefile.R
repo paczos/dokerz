@@ -1,5 +1,5 @@
 pkglist<-c('devtools','remotes','e1071','rpart','rpart.plot','lattice','ipred','cluster','quadprog',
-           'kernlab','Matrix','randomForest')
+           'kernlab','Matrix','randomForest','nnet')
 dmrpkglist<-c('dmr.data','dmr.util','dmr.util','dmr.claseval','dmr.stats',
               'dmr.trans','dmr.linreg','dmr.regeval','dmr.dissim','dmr.dectree',
               'dmr.linclas','dmr.disc','dmr.kcenters','dmr.cluseval','dmr.regtree',
@@ -16,7 +16,17 @@ data(weather, package="dmr.data")
 data(weatherc, package="dmr.data")
 data(weatherr, package="dmr.data")
 
-
+#packages for my tutorial https://github.com/pwasiewi/earin/blob/master/scripts/01stepfirsten.R
+pkglist<-c(pkglist,"reshape","ade4","sqldf","plyr","dplyr")
+pkglist<-c(pkglist,"party","rgl","scatterplot3d","fpc","pvclust","dendextend")
+pkglist<-c(pkglist,"nFactors","FactoMineR","RRF","mclust","foreach","doParallel")
+pkglist<-c(pkglist,"rpart","ipred","gbm","mda","klaR","kernlab","caret")
+pkglist<-c(pkglist,"tseries","fUnitRoots","forecast","sets","TTR")
+#pkglist<-c(pkglist,"MASS","RWeka")
+pkgcheck <- pkglist %in% row.names(installed.packages())
+#packages still not installed
+paste(pkglist[!pkgcheck],collapse=' ')
+for(i in pkglist){ library(i, character.only = TRUE);}
 ##############
 #2-4-10.R
 ##############
@@ -667,29 +677,29 @@ init <- function()
                                 paste("p", clabs, sep=".")))
   cprobs <<- (ncol(tree)-length(clabs)+1):ncol(tree)  # class probability columns
   nodemap <<- rep(1, nrow(data))
-  n <<- 1
+  node <<- 1
 }
 
 init()
 ##############
 #3-3-2.R
 ##############
-class.distribution <- function(n)
+class.distribution <- function(node)
 {
-  tree$count[tree$node==n] <<- sum(nodemap==n)
-  tree[tree$node==n,cprobs] <<- pdisc(data[nodemap==n,class])
+  tree$count[tree$node==node] <<- sum(nodemap==node)
+  tree[tree$node==node,cprobs] <<- pdisc(data[nodemap==node,class])
 }
 
-class.distribution(n)
+class.distribution(node)
 ##############
 #3-3-3.R
 ##############
-class.label <- function(n)
+class.label <- function(node)
 {
-  tree$class[tree$node==n] <<- which.max(tree[tree$node==n,cprobs])
+  tree$class[tree$node==node] <<- which.max(tree[tree$node==node,cprobs])
 }
 
-class.label(n)
+class.label(node)
 ##############
 #3-3-4.R
 ##############
@@ -697,13 +707,13 @@ maxprob <- 0.999
 minsplit <- 2
 maxdepth <- 8
 
-stop.criteria <- function(n)
+stop.criteria <- function(node)
 {
-  n>=2^maxdepth || tree$count[tree$node==n]<minsplit ||
-    max(tree[tree$node==n,cprobs])>maxprob
+  node>=2^maxdepth || tree$count[tree$node==node]<minsplit ||
+    max(tree[tree$node==node,cprobs])>maxprob
 }
 
-stop.criteria(n)
+stop.criteria(node)
 ##############
 #3-3-5.R
 ##############
@@ -735,12 +745,12 @@ split.eval <- function(av, sv, cl)
     Inf
 }
 
-split.select <- function(n)
+split.select <- function(node)
 {
   splits <- data.frame()
   for (attribute in attributes)
   {
-    uav <- sort(unique(data[nodemap==n,attribute]))
+    uav <- sort(unique(data[nodemap==node,attribute]))
     if (length(uav)>1)
       splits <- rbind(splits,
                       data.frame(attribute=attribute,
@@ -753,41 +763,43 @@ split.select <- function(n)
   if (nrow(splits)>0)
     splits$eval <- sapply(1:nrow(splits),
                           function(s)
-                          split.eval(data[nodemap==n,splits$attribute[s]],
+                          split.eval(data[nodemap==node,splits$attribute[s]],
                                      splits$value[s],
-                                     data[nodemap==n,class]))
+                                     data[nodemap==node,class]))
   if ((best.eval <- min(splits$eval))<Inf)
-    tree[tree$node==n,2:3] <<- splits[which.min(splits$eval),1:2]
+    tree[tree$node==node,2:3] <<- splits[which.min(splits$eval),1:2]
   best.eval
 }
 
   # entropy-based split selection
 imp <- entropy.p
-split.select(n)
+split.select(node)
 
   # Gini index-based split selection
 imp <- gini.p
-split.select(n)
+split.select(node)
+
+length(node) == 1L
 ##############
 #3-3-7.R
 ##############
-split.apply <- function(n)
+split.apply <- function(node)
 {
   tree <<- rbind(tree,
-                 data.frame(node=(2*n):(2*n+1),
+                 data.frame(node=(2*node):(2*node+1),
                             attribute=NA, value=NA, class=NA, count=NA,
                             `names<-`(rep(list(NA), length(clabs)),
                                       paste("p", clabs, sep="."))))
 
-  av <- data[[tree$attribute[tree$node==n]]]
+  av <- data[[tree$attribute[tree$node==node]]]
   cond <- !is.na(av) & (if (is.numeric(av))
-                          av<=as.numeric(tree$value[tree$node==n])
-                        else av==tree$value[tree$node==n])
-  nodemap[nodemap==n & cond] <<- 2*n
-  nodemap[nodemap==n & !cond] <<- 2*n+1
+                          av<=as.numeric(tree$value[tree$node==node])
+                        else av==tree$value[tree$node==node])
+  nodemap[nodemap==node & cond] <<- 2*node
+  nodemap[nodemap==node & !cond] <<- 2*node+1
 }
 
-split.apply(n)
+split.apply(node)
 ##############
 #3-3-8.R
 ##############
@@ -804,31 +816,31 @@ grow.dectree <- function(formula, data,
                                   paste("p", clabs, sep=".")))
     cprobs <<- (ncol(tree)-length(clabs)+1):ncol(tree)  # class probability columns
     nodemap <<- rep(1, nrow(data))
-    n <<- 1
+    node <<- 1
   }
 
-  next.node <- function(n)
+  next.node <- function(node)
   {
-    if (any(opn <- tree$node>n))
+    if (any(opn <- tree$node>node))
       min(tree$node[opn])
     else Inf
   }
 
-  class.distribution <- function(n)
+  class.distribution <- function(node)
   {
-    tree$count[tree$node==n] <<- sum(nodemap==n)
-    tree[tree$node==n,cprobs] <<- pdisc(data[nodemap==n,class])
+    tree$count[tree$node==node] <<- sum(nodemap==node)
+    tree[tree$node==node,cprobs] <<- pdisc(data[nodemap==node,class])
   }
 
-  class.label <- function(n)
+  class.label <- function(node)
   {
-    tree$class[tree$node==n] <<- which.max(tree[tree$node==n,cprobs])
+    tree$class[tree$node==node] <<- which.max(tree[tree$node==node,cprobs])
   }
 
-  stop.criteria <- function(n)
+  stop.criteria <- function(node)
   {
-    n>=2^maxdepth || tree$count[tree$node==n]<minsplit ||
-      max(tree[tree$node==n,cprobs])>maxprob
+    node>=2^maxdepth || tree$count[tree$node==node]<minsplit ||
+      max(tree[tree$node==node,cprobs])>maxprob
   }
 
   split.eval <- function(av, sv, cl)
@@ -845,12 +857,12 @@ grow.dectree <- function(formula, data,
       Inf
   }
 
-  split.select <- function(n)
+  split.select <- function(node)
   {
     splits <- data.frame()
     for (attribute in attributes)
     {
-      uav <- sort(unique(data[nodemap==n,attribute]))
+      uav <- sort(unique(data[nodemap==node,attribute]))
       if (length(uav)>1)
         splits <- rbind(splits,
                         data.frame(attribute=attribute,
@@ -863,44 +875,44 @@ grow.dectree <- function(formula, data,
     if (nrow(splits)>0)
       splits$eval <- sapply(1:nrow(splits),
                             function(s)
-                            split.eval(data[nodemap==n,splits$attribute[s]],
+                            split.eval(data[nodemap==node,splits$attribute[s]],
                                        splits$value[s],
-                                       data[nodemap==n,class]))
+                                       data[nodemap==node,class]))
     if ((best.eval <- min(splits$eval))<Inf)
-      tree[tree$node==n,2:3] <<- splits[which.min(splits$eval),1:2]
+      tree[tree$node==node,2:3] <<- splits[which.min(splits$eval),1:2]
     best.eval
   }
 
-  split.apply <- function(n)
+  split.apply <- function(node)
   {
     tree <<- rbind(tree,
-                   data.frame(node=(2*n):(2*n+1),
+                   data.frame(node=(2*node):(2*node+1),
                               attribute=NA, value=NA, class=NA, count=NA,
                               `names<-`(rep(list(NA), length(clabs)),
                                         paste("p", clabs, sep="."))))
 
-    av <- data[[tree$attribute[tree$node==n]]]
+    av <- data[[tree$attribute[tree$node==node]]]
     cond <- !is.na(av) & (if (is.numeric(av))
-                            av<=as.numeric(tree$value[tree$node==n])
-                          else av==tree$value[tree$node==n])
-    nodemap[nodemap==n & cond] <<- 2*n
-    nodemap[nodemap==n & !cond] <<- 2*n+1
+                            av<=as.numeric(tree$value[tree$node==node])
+                          else av==tree$value[tree$node==node])
+    nodemap[nodemap==node & cond] <<- 2*node
+    nodemap[nodemap==node & !cond] <<- 2*node+1
   }
 
-  tree <- nodemap <- n <- NULL
+  tree <- nodemap <- node <- NULL
   clabs <- cprobs <- NULL
   class <- y.var(formula)
   attributes <- x.vars(formula, data)
 
   init()
-  while (is.finite(n))
+  while (is.finite(node))
   {
-    class.distribution(n)
-    class.label(n)
-    if (!stop.criteria(n))
-      if (split.select(n)<Inf)
-        split.apply(n)
-    n <- next.node(n)
+    class.distribution(node)
+    class.label(node)
+    if (!stop.criteria(node))
+      if (split.select(node)<Inf)
+        split.apply(node)
+    node <- next.node(node)
   }
   tree$class <- clabs[tree$class]
   `class<-`(tree, "dectree")
@@ -919,6 +931,7 @@ treec <- grow.dectree(play~., weatherc)
   # data frame conversion
 as.data.frame(tree)
 as.data.frame(treec)
+
 ##############
 #3-4-1.R
 ##############
@@ -1021,9 +1034,9 @@ sapply(as.integer(row.names(rptree$frame)),
 node.pep.error <- function(rp, node, data, class)
 {
   e <- node.error(rp, node, data, class)
-  n <- node.card(rp, node, data)
-  e1 <- (e*n+1)/(n+2)
-  e + sqrt(e1*(1-e1)/n)
+  node <- node.card(rp, node, data)
+  e1 <- (e*node+1)/(node+2)
+  e + sqrt(e1*(1-e1)/node)
 }
 
   # PEP error of node 1
@@ -1046,10 +1059,10 @@ sapply(as.integer(row.names(rptree$frame)),
 leaf.mep.error <- function(rp, node, data, class, m)
 {
   e <- leaf.error(rp, node, data, class)
-  n <- node.card(rp, node, data)
-  nc <- (1-e)*n
+  node <- node.card(rp, node, data)
+  nc <- (1-e)*node
   p <- as.double(pdisc(class)[rp$frame$yval[row.names(rp$frame)==node]])
-  1-(nc+m*p)/(n+m)
+  1-(nc+m*p)/(node+m)
 }
 
   # MEP error of node 1, if treated as a leaf, for m=0, 2, 5
@@ -1126,20 +1139,20 @@ sapply(as.integer(row.names(rptree$frame)),
 ## decision tree prediction
 predict.dectree <- function(tree, data)
 {
-  descend <- function(n)
+  descend <- function(node)
   {
-    if (!is.na(tree$attribute[tree$node==n]))  # unless reached a leaf
+    if (!is.na(tree$attribute[tree$node==node]))  # unless reached a leaf
     {
-      av <- data[[tree$attribute[tree$node==n]]]
+      av <- data[[tree$attribute[tree$node==node]]]
       cond <- !is.na(av) & (if (is.numeric(av))
-                              av<=tree$value[tree$node==n]
+                              av<=tree$value[tree$node==node]
                             else
-                              av==tree$value[tree$node==n])
+                              av==tree$value[tree$node==node])
 
-      nodemap[nodemap==n & cond] <<- 2*n
-      nodemap[nodemap==n & !cond] <<- 2*n+1
-      descend(2*n)
-      descend(2*n+1)
+      nodemap[nodemap==node & cond] <<- 2*node
+      nodemap[nodemap==node & !cond] <<- 2*node+1
+      descend(2*node)
+      descend(2*node+1)
     }
   }
 
@@ -1160,10 +1173,10 @@ predict(treec, weatherc)
 grow.dectree.frac <- function(formula, data,
                               imp=entropy.p, maxprob=0.999, minsplit=2, maxdepth=8)
 {
-  nmn <- function(n) { nodemap[,"node"]==n }            # nodemap entries for node n
-  inn <- function(n)
-  { nodemap[nodemap[,"node"]==n,"instance"] }                  # instances at node n
-  wgn <- function(n) { nodemap[nodemap[,"node"]==n,"weight"] }   # weights at node n
+  nmn <- function(node) { nodemap[,"node"]==node }            # nodemap entries for node node
+  inn <- function(node)
+  { nodemap[nodemap[,"node"]==node,"instance"] }                  # instances at node node
+  wgn <- function(node) { nodemap[nodemap[,"node"]==node,"weight"] }   # weights at node node
 
   init <- function()
   {
@@ -1175,31 +1188,31 @@ grow.dectree.frac <- function(formula, data,
     cprobs <<- (ncol(tree)-length(clabs)+1):ncol(tree)  # class probability columns
     nodemap <<- cbind(instance=1:nrow(data), node=rep(1, nrow(data)),
                       weight=rep(1, nrow(data)))
-    n <<- 1
+    node <<- 1
   }
 
-  next.node <- function(n)
+  next.node <- function(node)
   {
-    if (any(opn <- tree$node>n))
+    if (any(opn <- tree$node>node))
       min(tree$node[opn])
     else Inf
   }
 
-  class.distribution <- function(n)
+  class.distribution <- function(node)
   {
-    tree[tree$node==n,"count"] <<- sum(wgn(n))
-    tree[tree$node==n,cprobs] <<- weighted.pdisc(data[inn(n),class], w=wgn(n))
+    tree[tree$node==node,"count"] <<- sum(wgn(node))
+    tree[tree$node==node,cprobs] <<- weighted.pdisc(data[inn(node),class], w=wgn(node))
   }
 
-  class.label <- function(n)
+  class.label <- function(node)
   {
-    tree$class[tree$node==n] <<- which.max(tree[tree$node==n,cprobs])
+    tree$class[tree$node==node] <<- which.max(tree[tree$node==node,cprobs])
   }
 
-  stop.criteria <- function(n)
+  stop.criteria <- function(node)
   {
-    n>=2^maxdepth || tree[tree$node==n,"count"]<minsplit ||
-      max(tree[tree$node==n,cprobs])>maxprob
+    node>=2^maxdepth || tree[tree$node==node,"count"]<minsplit ||
+      max(tree[tree$node==node,cprobs])>maxprob
   }
 
   split.eval <- function(av, sv, cl, w)
@@ -1231,12 +1244,12 @@ grow.dectree.frac <- function(formula, data,
       Inf
   }
 
-  split.select <- function(n)
+  split.select <- function(node)
   {
     splits <- data.frame()
     for (attribute in attributes)
     {
-      uav <- sort(unique(data[inn(n),attribute]))
+      uav <- sort(unique(data[inn(node),attribute]))
       if (length(uav)>1)
         splits <- rbind(splits,
                         data.frame(attribute=attribute,
@@ -1249,63 +1262,63 @@ grow.dectree.frac <- function(formula, data,
     if (nrow(splits)>0)
       splits$eval <- sapply(1:nrow(splits),
                             function(s)
-                            split.eval(data[inn(n),splits$attribute[s]],
+                            split.eval(data[inn(node),splits$attribute[s]],
                                        splits$value[s],
-                                       data[inn(n),class], wgn(n)))
+                                       data[inn(node),class], wgn(node)))
     if ((best.eval <- min(splits$eval))<Inf)
-      tree[tree$node==n,2:3] <<- splits[which.min(splits$eval),1:2]
+      tree[tree$node==node,2:3] <<- splits[which.min(splits$eval),1:2]
     return(best.eval)
   }
 
-  split.apply <- function(n)
+  split.apply <- function(node)
   {
     tree <<- rbind(tree,
-                   data.frame(node=(2*n):(2*n+1),
+                   data.frame(node=(2*node):(2*node+1),
                               attribute=NA, value=NA, class=NA, count=NA,
                               `names<-`(rep(list(NA), length(clabs)),
                                         paste("p", clabs, sep="."))))
 
-    av <- data[nodemap[,"instance"],tree$attribute[tree$node==n]]
-    cond <- if (is.numeric(av)) av<=as.numeric(tree$value[tree$node==n])
-            else av==tree$value[tree$node==n]
+    av <- data[nodemap[,"instance"],tree$attribute[tree$node==node]]
+    cond <- if (is.numeric(av)) av<=as.numeric(tree$value[tree$node==node])
+            else av==tree$value[tree$node==node]
     cond1 <- !is.na(av) & cond   # true split outcome
     cond0 <- !is.na(av) & !cond  # false split outcome
 
-    n1 <- sum(nodemap[nmn(n) & cond1,"weight"])
-    n0 <- sum(nodemap[nmn(n) & cond0,"weight"])
-    nm <- sum(nodemap[nmn(n) & is.na(av),"weight"])
+    n1 <- sum(nodemap[nmn(node) & cond1,"weight"])
+    n0 <- sum(nodemap[nmn(node) & cond0,"weight"])
+    nm <- sum(nodemap[nmn(node) & is.na(av),"weight"])
 
-    nodemap[nmn(n) & cond1,"node"] <<- 2*n
-    nodemap[nmn(n) & cond0,"node"] <<- 2*n+1
+    nodemap[nmn(node) & cond1,"node"] <<- 2*node
+    nodemap[nmn(node) & cond0,"node"] <<- 2*node+1
 
     if (nm>0)
     {
       p1 <- if (n1+n0>0) n1/(n1+n0) else 0.5
       p0 <- 1-p1
-      newnn <- nodemap[nmn(n) & is.na(av),,drop=FALSE]
-      nodemap[nmn(n) & is.na(av),"weight"] <<-
-        p1*nodemap[nmn(n) & is.na(av),"weight"]
-      nodemap[nmn(n) & is.na(av),"node"] <<- 2*n
+      newnn <- nodemap[nmn(node) & is.na(av),,drop=FALSE]
+      nodemap[nmn(node) & is.na(av),"weight"] <<-
+        p1*nodemap[nmn(node) & is.na(av),"weight"]
+      nodemap[nmn(node) & is.na(av),"node"] <<- 2*node
       newnn[,"weight"] <- p0*newnn[,"weight"]
-      newnn[,"node"] <- 2*n+1
+      newnn[,"node"] <- 2*node+1
       nodemap <<- rbind(nodemap, newnn)
     }
   }
 
-  tree <- cprobs <- nodemap <- n <- NULL
+  tree <- cprobs <- nodemap <- node <- NULL
   clabs <- cprobs <- NULL
   class <- y.var(formula)
   attributes <- x.vars(formula, data)
 
   init()
-  while (is.finite(n))
+  while (is.finite(node))
   {
-    class.distribution(n)
-    class.label(n)
-    if (!stop.criteria(n))
-      if (split.select(n)<Inf)
-        split.apply(n)
-    n <- next.node(n)
+    class.distribution(node)
+    class.label(node)
+    if (!stop.criteria(node))
+      if (split.select(node)<Inf)
+        split.apply(node)
+    node <- next.node(node)
   }
   tree$class <- clabs[tree$class]
   `class<-`(tree, "dectree.frac")
@@ -1337,39 +1350,39 @@ as.data.frame(treecm)
 ## with missing value support using fractional instances
 predict.dectree.frac <- function(tree, data)
 {
-  nmn <- function(n) { nodemap[,"node"]==n }  # nodemap entries for node n
+  nmn <- function(node) { nodemap[,"node"]==node }  # nodemap entries for node node
 
-  descend <- function(n)
+  descend <- function(node)
   {
-    if (!is.na(tree$attribute[tree$node==n]))  # unless reached a leaf
+    if (!is.na(tree$attribute[tree$node==node]))  # unless reached a leaf
     {
-      av <- data[nodemap[,"instance"],tree$attribute[tree$node==n]]
-      cond <- if (is.numeric(av)) av<=as.numeric(tree$value[tree$node==n])
-              else av==tree$value[tree$node==n]
+      av <- data[nodemap[,"instance"],tree$attribute[tree$node==node]]
+      cond <- if (is.numeric(av)) av<=as.numeric(tree$value[tree$node==node])
+              else av==tree$value[tree$node==node]
       cond1 <- !is.na(av) & cond   # true split outcome
       cond0 <- !is.na(av) & !cond  # false split outcome
 
-      nodemap[nmn(n) & cond1, "node"] <<- 2*n
-      nodemap[nmn(n) & cond0, "node"] <<- 2*n+1
+      nodemap[nmn(node) & cond1, "node"] <<- 2*node
+      nodemap[nmn(node) & cond0, "node"] <<- 2*node+1
 
-      if (sum(nodemap[nmn(n) & is.na(av), "weight"])>0)
+      if (sum(nodemap[nmn(node) & is.na(av), "weight"])>0)
       {
-        n1 <- tree$count[tree$node==2*n]
-        n0 <- tree$count[tree$node==2*n+1]
+        n1 <- tree$count[tree$node==2*node]
+        n0 <- tree$count[tree$node==2*node+1]
         p1 <- if (n1+n0>0) n1/(n1+n0) else 0.5
         p0 <- 1-p1
 
-        newnn <- nodemap[nmn(n) & is.na(av),,drop=FALSE]
-        nodemap[nmn(n) & is.na(av),"weight"] <<-
-          p1*nodemap[nmn(n) & is.na(av),"weight"]
-        nodemap[nmn(n) & is.na(av), "node"] <<- 2*n
+        newnn <- nodemap[nmn(node) & is.na(av),,drop=FALSE]
+        nodemap[nmn(node) & is.na(av),"weight"] <<-
+          p1*nodemap[nmn(node) & is.na(av),"weight"]
+        nodemap[nmn(node) & is.na(av), "node"] <<- 2*node
         newnn[,"weight"] <- p0*newnn[,"weight"]
-        newnn[,"node"] <- 2*n+1
+        newnn[,"node"] <- 2*node+1
         nodemap <<- rbind(nodemap, newnn)
       }
 
-      descend(2*n)
-      descend(2*n+1)
+      descend(2*node)
+      descend(2*node+1)
     }
   }
 
@@ -2307,7 +2320,7 @@ lines(c(0, 12), rep(v01.err[7], 2), lty=3)
 #6-5-1.R
 ##############
 ## run misclassification costs experiments
-mc.experiment <- function(algs, datasets, classes, rmax=10, m=25, k=10, n=1,
+mc.experiment <- function(algs, datasets, classes, rmax=10, m=25, k=10, node=1,
                           palgs=NULL, args.c=NULL, args.p=NULL, pargs=NULL,
                           predfs=predict, ppredfs.algs=predict,
                           ppredfs.palgs=predict)
@@ -2452,14 +2465,15 @@ barplot(colMeans(mc.res$Vehicle01$naiveBayes.NULL$mc[,7:9]),
 library(dmr.util)
 library(rpart)
 
-data(Soybean, package="mlbench")
-
+#data(Soybean, package="mlbench")
+pairs(iris[1:4], main = "Edgar Anderson's Iris Data", pch = 21, bg = c("red", "green3", "blue")[unclass(iris$Species)])
+mdata<-iris
 set.seed(12)
-rs <- runif(nrow(Soybean))
-s.train <- Soybean[rs>=0.33,]
-s.test <- Soybean[rs<0.33,]
+rs <- runif(nrow(mdata))
+s.train <- mdata[rs>=0.33,]
+s.test <- mdata[rs<0.33,]
 
-s.tree <- rpart(Class~., s.train)
+s.tree <- rpart(Species~., s.train)
 ##############
 #7-2-10.R
 ##############
@@ -2508,14 +2522,28 @@ roc <- function(pred.s, true.y)
   }
   rt <- rbind(rt, data.frame(tpr=tp/(tp+fn), fpr=fp/(fp+tn), cutoff=cutoff))
 }
-
+s01.tree<-s.tree
+s01.test<-s.test
+prp(s01.tree, varlen=0, faclen=0)
+plotcp(s01.tree)
+plot(s01.tree, uniform=TRUE,main="Decision tree")
+pred_labels1<-predict(s01.tree, s01.test)
+#finding a name of factor level
+levels(s01.test$Species)[which.is.max(pred_labels1[1,])]
+#converting factor to the string vector
+sapply(s01.test$Species, as.character)
+#converting factor to the factor index vector
+fit1=c();for(i in 1:nrow(pred_labels1))fit1=c(fit1,which.is.max(pred_labels1[i,])); fit1
+#converting factor to index 
+#levels(s01.test$Species)<-seq_len(length(levels(s01.test$Species)))
+as.integer(s01.test$Species)
   # ROC curve for the decision tree model
-s01.roc <- roc(predict(s01.tree, s01.test)[,2], s01.test$Class)
+s01.roc <- roc(fit1, s01.test$Species)
 plot(s01.roc$fpr, s01.roc$tpr, type="l", xlab="FP rate", ylab="TP rate")
 
   # ROC curve for a random model
 s01rand <- runif(nrow(s01.test))
-s01rand.roc <- roc(s01rand, s01.test$Class)
+s01rand.roc <- roc(s01rand, s01.test$Species)
 lines(s01rand.roc$fpr, s01rand.roc$tpr, lty=2)
 ##############
 #7-2-12.R
@@ -2535,15 +2563,18 @@ roc.shift <- function(r, min.tpr=NULL, max.fpr=NULL)
     0.5
 }
 
+s01.tree<-s.tree
+s01.test<-s.test
+s01.labels<-'a'
   # shift to achieve tpr>0.85 at minimum fpr
 s01.t085 <- roc.shift(s01.roc, min.tpr=0.85)
 s01.cm.t085 <- confmat(cutclass(predict(s01.tree, s01.test)[,2],
                                 s01.t085, s01.labels),
-                       s01.test$Class)
+                       s01.test$Species)
   # shift to achieve maximum tpr at fpr<0.5
 s01.f05 <- roc.shift(s01.roc, max.fpr=0.5)
 s01.cm.f05 <- confmat(cutclass(predict(s01.tree, s01.test)[,2], s01.f05, s01.labels),
-                      s01.test$Class)
+                      s01.test$Species)
   # the ROC curve
 plot(s01.roc$fpr, s01.roc$tpr, type="l", xlab="FP rate", ylab="TP rate")
   # the default operating point
@@ -2614,12 +2645,12 @@ wroc <- function(pred.s, true.y, w=rep(1, length(true.y)))
 }
 
   # ROC curve with double weight for the brown-spot class
-s01.w1roc <- wroc(predict(s01.tree, s01.test)[,2], s01.test$Class, s01.w1test)
+s01.w1roc <- wroc(predict(s01.tree, s01.test)[,2], s01.test$Species, s01.w1test)
 plot(s01.w1roc$fpr, s01.w1roc$tpr, type="l", xlab="FP rate", ylab="TP rate")
 auc(s01.w1roc)
 
   # ROC curve with 10 times less weight for instances with plant.stand=1
-s01.w2roc <- wroc(predict(s01.tree, s01.test)[,2], s01.test$Class, s01.w2test)
+s01.w2roc <- wroc(predict(s01.tree, s01.test)[,2], s01.test$Species, s01.w2test)
 lines(s01.w2roc$fpr, s01.w2roc$tpr, lty=2)
 legend("bottomright", c("brown-spot x2", "plant.stand=1 x10"), lty=1:2)
 auc(s01.w2roc)
@@ -2642,9 +2673,9 @@ lik01 <- function(prob.y, true.y, eps=.Machine$double.eps)
 }
 
   # likelihood for the Soybean data
-lik(predict(s.tree, s.test), s.test$Class)
-lik(predict(s01.tree, s01.test), s01.test$Class)
-lik01(predict(s01.tree, s01.test)[,2], s01.test$Class)
+lik(predict(s.tree, s.test), s.test$Species)
+lik(predict(s01.tree, s01.test), s01.test$Species)
+lik01(predict(s01.tree, s01.test)[,2], s01.test$Species)
 ##############
 #7-2-17.R
 ##############
@@ -2783,7 +2814,7 @@ confmat01 <- function(pred.y, true.y)
                    }), levels(true.y))
 }
 
-s.cm01 <- confmat01(predict(s.tree, s.test, type="c"), s.test$Class)
+s.cm01 <- confmat01(predict(s.tree, s.test, type="c"), s.test$Species)
   # average TP rate, FP rate, and f-measure
 rowMeans(sapply(s.cm01, function(cm) c(tpr=tpr(cm), fpr=fpr(cm), fm=f.measure(cm))))
 ##############
@@ -3377,7 +3408,7 @@ enhance3 <- function(data) { cbind(data, sq=data^2) }
   # gradient descent estimation for f3
 gd3e <- gradient.descent(f3~a1+a2+a3+a4, lrdat.train, w=rep(0, 9),
                          repf=repf.enh(enhance3), grad=grad.enh(enhance3),
-                         beta=0.001, eps=0.005)
+                         beta=0.001, eps=0.05)
   # test set error
 mse(predict(gd3e$model, lrdat.test[,1:4]), lrdat.test$f3)
 
@@ -3456,30 +3487,30 @@ init <- function()
   tree <<- data.frame(node=1, attribute=NA, value=NA, target=NA,
                       count=NA, mean=NA, variance=NA)
   nodemap <<- rep(1, nrow(data))
-  n <<- 1
+  node <<- 1
 }
 
 init()
 ##############
 #9-3-2.R
 ##############
-target.summary <- function(n)
+target.summary <- function(node)
 {
-  tree$count[tree$node==n] <<- sum(nodemap==n)
-  tree$mean[tree$node==n] <<- mean(data[nodemap==n,target])
-  tree$variance[tree$node==n] <<- var1(data[nodemap==n,target])
+  tree$count[tree$node==node] <<- sum(nodemap==node)
+  tree$mean[tree$node==node] <<- mean(data[nodemap==node,target])
+  tree$variance[tree$node==node] <<- var1(data[nodemap==node,target])
 }
 
-target.summary(n)
+target.summary(node)
 ##############
 #9-3-3.R
 ##############
-target.value <- function(n)
+target.value <- function(node)
 {
-  tree$target[tree$node==n] <<- tree$mean[tree$node==n]
+  tree$target[tree$node==node] <<- tree$mean[tree$node==node]
 }
 
-target.value(n)
+target.value(node)
 ##############
 #9-3-4.R
 ##############
@@ -3487,13 +3518,13 @@ minvar <- 0.005
 minsplit <- 2
 maxdepth <- 8
 
-stop.criteria <- function(n)
+stop.criteria <- function(node)
 {
-  n>=2^maxdepth || tree$count[tree$node==n]<minsplit ||
-    tree$variance[tree$node==n]<minvar
+  node>=2^maxdepth || tree$count[tree$node==node]<minsplit ||
+    tree$variance[tree$node==node]<minvar
 }
 
-stop.criteria(n)
+stop.criteria(node)
 ##############
 #9-3-5.R
 ##############
@@ -3524,12 +3555,12 @@ split.eval <- function(av, sv, tv)
     Inf
 }
 
-split.select <- function(n)
+split.select <- function(node)
 {
   splits <- data.frame()
   for (attribute in attributes)
   {
-    uav <- sort(unique(data[nodemap==n,attribute]))
+    uav <- sort(unique(data[nodemap==node,attribute]))
     if (length(uav)>1)
       splits <- rbind(splits,
                       data.frame(attribute=attribute,
@@ -3542,34 +3573,34 @@ split.select <- function(n)
   if (nrow(splits)>0)
     splits$eval <- sapply(1:nrow(splits),
                           function(s)
-                          split.eval(data[nodemap==n,splits$attribute[s]],
+                          split.eval(data[nodemap==node,splits$attribute[s]],
                                      splits$value[s],
-                                     data[nodemap==n,target]))
+                                     data[nodemap==node,target]))
   if ((best.eval <- min(splits$eval))<Inf)
-    tree[tree$node==n,2:3] <<- splits[which.min(splits$eval),1:2]
+    tree[tree$node==node,2:3] <<- splits[which.min(splits$eval),1:2]
   best.eval
 }
 
   # variance-based split selection
-split.select(n)
+split.select(node)
 ##############
 #9-3-7.R
 ##############
-split.apply <- function(n)
+split.apply <- function(node)
 {
   tree <<- rbind(tree,
-                 data.frame(node=(2*n):(2*n+1), attribute=NA, value=NA, target=NA,
+                 data.frame(node=(2*node):(2*node+1), attribute=NA, value=NA, target=NA,
                             count=NA, mean=NA, variance=NA))
 
-  av <- data[[tree$attribute[tree$node==n]]]
+  av <- data[[tree$attribute[tree$node==node]]]
   cond <- !is.na(av) & (if (is.numeric(av))
-                          av<=as.numeric(tree$value[tree$node==n])
-                        else av==tree$value[tree$node==n])
-  nodemap[nodemap==n & cond] <<- 2*n
-  nodemap[nodemap==n & !cond] <<- 2*n+1
+                          av<=as.numeric(tree$value[tree$node==node])
+                        else av==tree$value[tree$node==node])
+  nodemap[nodemap==node & cond] <<- 2*node
+  nodemap[nodemap==node & !cond] <<- 2*node+1
 }
 
-split.apply(n)
+split.apply(node)
 ##############
 #9-3-8.R
 ##############
@@ -3581,32 +3612,32 @@ grow.regtree <- function(formula, data, minvar=0.005, minsplit=2, maxdepth=8)
     tree <<- data.frame(node=1, attribute=NA, value=NA, target=NA,
                         count=NA, mean=NA, variance=NA)
     nodemap <<- rep(1, nrow(data))
-    n <<- 1
+    node <<- 1
   }
 
-  next.node <- function(n)
+  next.node <- function(node)
   {
-    if (any(opn <- tree$node>n))
+    if (any(opn <- tree$node>node))
       min(tree$node[opn])
     else Inf
   }
 
-  target.summary <- function(n)
+  target.summary <- function(node)
   {
-    tree$count[tree$node==n] <<- sum(nodemap==n)
-    tree$mean[tree$node==n] <<- mean(data[nodemap==n,target])
-    tree$variance[tree$node==n] <<- var1(data[nodemap==n,target])
+    tree$count[tree$node==node] <<- sum(nodemap==node)
+    tree$mean[tree$node==node] <<- mean(data[nodemap==node,target])
+    tree$variance[tree$node==node] <<- var1(data[nodemap==node,target])
   }
 
-  target.value <- function(n)
+  target.value <- function(node)
   {
-    tree$target[tree$node==n] <<- tree$mean[tree$node==n]
+    tree$target[tree$node==node] <<- tree$mean[tree$node==node]
   }
 
-  stop.criteria <- function(n)
+  stop.criteria <- function(node)
   {
-    n>=2^maxdepth || tree$count[tree$node==n]<minsplit ||
-      tree$variance[tree$node==n]<minvar
+    node>=2^maxdepth || tree$count[tree$node==node]<minsplit ||
+      tree$variance[tree$node==node]<minvar
   }
 
   split.eval <- function(av, sv, tv)
@@ -3622,12 +3653,12 @@ grow.regtree <- function(formula, data, minvar=0.005, minsplit=2, maxdepth=8)
       Inf
   }
 
-  split.select <- function(n)
+  split.select <- function(node)
   {
     splits <- data.frame()
     for (attribute in attributes)
     {
-      uav <- sort(unique(data[nodemap==n,attribute]))
+      uav <- sort(unique(data[nodemap==node,attribute]))
       if (length(uav)>1)
         splits <- rbind(splits,
                         data.frame(attribute=attribute,
@@ -3640,41 +3671,41 @@ grow.regtree <- function(formula, data, minvar=0.005, minsplit=2, maxdepth=8)
     if (nrow(splits)>0)
       splits$eval <- sapply(1:nrow(splits),
                             function(s)
-                            split.eval(data[nodemap==n,splits$attribute[s]],
+                            split.eval(data[nodemap==node,splits$attribute[s]],
                                        splits$value[s],
-                                       data[nodemap==n,target]))
+                                       data[nodemap==node,target]))
     if ((best.eval <- min(splits$eval))<Inf)
-      tree[tree$node==n,2:3] <<- splits[which.min(splits$eval),1:2]
+      tree[tree$node==node,2:3] <<- splits[which.min(splits$eval),1:2]
     best.eval
   }
 
-  split.apply <- function(n)
+  split.apply <- function(node)
   {
     tree <<- rbind(tree,
-                   data.frame(node=(2*n):(2*n+1), attribute=NA, value=NA, target=NA,
+                   data.frame(node=(2*node):(2*node+1), attribute=NA, value=NA, target=NA,
                               count=NA, mean=NA, variance=NA))
 
-    av <- data[[tree$attribute[tree$node==n]]]
+    av <- data[[tree$attribute[tree$node==node]]]
     cond <- !is.na(av) & (if (is.numeric(av))
-                            av<=as.numeric(tree$value[tree$node==n])
-                          else av==tree$value[tree$node==n])
-    nodemap[nodemap==n & cond] <<- 2*n
-    nodemap[nodemap==n & !cond] <<- 2*n+1
+                            av<=as.numeric(tree$value[tree$node==node])
+                          else av==tree$value[tree$node==node])
+    nodemap[nodemap==node & cond] <<- 2*node
+    nodemap[nodemap==node & !cond] <<- 2*node+1
   }
 
-  tree <- nodemap <- n <- NULL
+  tree <- nodemap <- node <- NULL
   target <- y.var(formula)
   attributes <- x.vars(formula, data)
 
   init()
-  while (is.finite(n))
+  while (is.finite(node))
   {
-    target.summary(n)
-    target.value(n)
-    if (!stop.criteria(n))
-      if (split.select(n)<Inf)
-        split.apply(n)
-    n <- next.node(n)
+    target.summary(node)
+    target.value(node)
+    if (!stop.criteria(node))
+      if (split.select(node)<Inf)
+        split.apply(node)
+    node <- next.node(node)
   }
   `class<-`(tree, "regtree")
 }
@@ -3694,18 +3725,18 @@ as.data.frame(tree)
 ## regression tree prediction
 predict.regtree <- function(tree, data)
 {
-  descend <- function(n)
+  descend <- function(node)
   {
-    if (!is.na(tree$attribute[tree$node==n]))  # unless reached a leaf
+    if (!is.na(tree$attribute[tree$node==node]))  # unless reached a leaf
     {
-      av <- data[[tree$attribute[tree$node==n]]]
+      av <- data[[tree$attribute[tree$node==node]]]
       cond <- !is.na(av) & (if (is.numeric(av))
-                              av<=as.numeric(tree$value[tree$node==n])
-                            else av==tree$value[tree$node==n])
-      nodemap[nodemap==n & cond] <<- 2*n
-      nodemap[nodemap==n & !cond] <<- 2*n+1
-      descend(2*n)
-      descend(2*n+1)
+                              av<=as.numeric(tree$value[tree$node==node])
+                            else av==tree$value[tree$node==node])
+      nodemap[nodemap==node & cond] <<- 2*node
+      nodemap[nodemap==node & !cond] <<- 2*node+1
+      descend(2*node)
+      descend(2*node+1)
     }
   }
 
@@ -3722,10 +3753,10 @@ predict(tree, weatherr)
 ## a simple regression tree growing implementation
 grow.regtree.frac <- function(formula, data, minvar=0.005, minsplit=2, maxdepth=8)
 {
-  nmn <- function(n) { nodemap[,"node"]==n }            # nodemap entries for node n
-  inn <- function(n)
-  { nodemap[nodemap[,"node"]==n,"instance"] }                  # instances at node n
-  wgn <- function(n) { nodemap[nodemap[,"node"]==n,"weight"] }   # weights at node n
+  nmn <- function(node) { nodemap[,"node"]==node }            # nodemap entries for node node
+  inn <- function(node)
+  { nodemap[nodemap[,"node"]==node,"instance"] }                  # instances at node node
+  wgn <- function(node) { nodemap[nodemap[,"node"]==node,"weight"] }   # weights at node node
 
   init <- function()
   {
@@ -3733,32 +3764,32 @@ grow.regtree.frac <- function(formula, data, minvar=0.005, minsplit=2, maxdepth=
                         count=NA, mean=NA, variance=NA)
     nodemap <<- cbind(instance=1:nrow(data), node=rep(1, nrow(data)),
                       weight=rep(1, nrow(data)))
-    n <<- 1
+    node <<- 1
   }
 
-  next.node <- function(n)
+  next.node <- function(node)
   {
-    if (any(opn <- tree$node>n))
+    if (any(opn <- tree$node>node))
       min(tree$node[opn])
     else Inf
   }
 
-  target.summary <- function(n)
+  target.summary <- function(node)
   {
-    tree$count[tree$node==n] <<- sum(wgn(n))
-    tree$mean[tree$node==n] <<- weighted.mean(data[inn(n),target], wgn(n))
-    tree$variance[tree$node==n] <<- weighted.var1(data[inn(n),target], wgn(n))
+    tree$count[tree$node==node] <<- sum(wgn(node))
+    tree$mean[tree$node==node] <<- weighted.mean(data[inn(node),target], wgn(node))
+    tree$variance[tree$node==node] <<- weighted.var1(data[inn(node),target], wgn(node))
   }
 
-  target.value <- function(n)
+  target.value <- function(node)
   {
-    tree$target[tree$node==n] <<- tree$mean[tree$node==n]
+    tree$target[tree$node==node] <<- tree$mean[tree$node==node]
   }
 
-  stop.criteria <- function(n)
+  stop.criteria <- function(node)
   {
-    n>=2^maxdepth || tree$count[tree$node==n]<minsplit ||
-      tree$variance[tree$node==n]<minvar
+    node>=2^maxdepth || tree$count[tree$node==node]<minsplit ||
+      tree$variance[tree$node==node]<minvar
   }
 
   split.eval <- function(av, sv, tv, w)
@@ -3793,12 +3824,12 @@ grow.regtree.frac <- function(formula, data, minvar=0.005, minsplit=2, maxdepth=
       Inf
   }
 
-  split.select <- function(n)
+  split.select <- function(node)
   {
     splits <- data.frame()
     for (attribute in attributes)
     {
-      uav <- sort(unique(data[inn(n),attribute]))
+      uav <- sort(unique(data[inn(node),attribute]))
       if (length(uav)>1)
         splits <- rbind(splits,
                         data.frame(attribute=attribute,
@@ -3811,60 +3842,60 @@ grow.regtree.frac <- function(formula, data, minvar=0.005, minsplit=2, maxdepth=
     if (nrow(splits)>0)
       splits$eval <- sapply(1:nrow(splits),
                             function(s)
-                            split.eval(data[inn(n),splits$attribute[s]],
+                            split.eval(data[inn(node),splits$attribute[s]],
                                        splits$value[s],
-                                       data[inn(n),target], wgn(n)))
+                                       data[inn(node),target], wgn(node)))
     if ((best.eval <- min(splits$eval))<Inf)
-      tree[tree$node==n,2:3] <<- splits[which.min(splits$eval),1:2]
+      tree[tree$node==node,2:3] <<- splits[which.min(splits$eval),1:2]
     best.eval
   }
 
-  split.apply <- function(n)
+  split.apply <- function(node)
   {
     tree <<- rbind(tree,
-                   data.frame(node=(2*n):(2*n+1), attribute=NA, value=NA, target=NA,
+                   data.frame(node=(2*node):(2*node+1), attribute=NA, value=NA, target=NA,
                               count=NA, mean=NA, variance=NA))
 
-    av <- data[nodemap[,"instance"],tree$attribute[tree$node==n]]
-    cond <- if (is.numeric(av)) av<=as.numeric(tree$value[tree$node==n])
-            else av==tree$value[tree$node==n]
+    av <- data[nodemap[,"instance"],tree$attribute[tree$node==node]]
+    cond <- if (is.numeric(av)) av<=as.numeric(tree$value[tree$node==node])
+            else av==tree$value[tree$node==node]
     cond1 <- !is.na(av) & cond   # true split outcome
     cond0 <- !is.na(av) & !cond  # false split outcome
 
-    n1 <- sum(nodemap[nmn(n) & cond1,"weight"])
-    n0 <- sum(nodemap[nmn(n) & cond0,"weight"])
-    nm <- sum(nodemap[nmn(n) & is.na(av),"weight"])
+    n1 <- sum(nodemap[nmn(node) & cond1,"weight"])
+    n0 <- sum(nodemap[nmn(node) & cond0,"weight"])
+    nm <- sum(nodemap[nmn(node) & is.na(av),"weight"])
 
-    nodemap[nmn(n) & cond1,"node"] <<- 2*n
-    nodemap[nmn(n) & cond0,"node"] <<- 2*n+1
+    nodemap[nmn(node) & cond1,"node"] <<- 2*node
+    nodemap[nmn(node) & cond0,"node"] <<- 2*node+1
 
     if (nm>0)
     {
       p1 <- if (n1+n0>0) n1/(n1+n0) else 0.5
       p0 <- 1-p1
-      newnn <- nodemap[nmn(n) & is.na(av),,drop=FALSE]
-      nodemap[nmn(n) & is.na(av),"weight"] <<-
-        p1*nodemap[nmn(n) & is.na(av),"weight"]
-      nodemap[nmn(n) & is.na(av),"node"] <<- 2*n
+      newnn <- nodemap[nmn(node) & is.na(av),,drop=FALSE]
+      nodemap[nmn(node) & is.na(av),"weight"] <<-
+        p1*nodemap[nmn(node) & is.na(av),"weight"]
+      nodemap[nmn(node) & is.na(av),"node"] <<- 2*node
       newnn[,"weight"] <- p0*newnn[,"weight"]
-      newnn[,"node"] <- 2*n+1
+      newnn[,"node"] <- 2*node+1
       nodemap <<- rbind(nodemap, newnn)
     }
   }
 
-  tree <- nodemap <- n <- NULL
+  tree <- nodemap <- node <- NULL
   target <- y.var(formula)
   attributes <- x.vars(formula, data)
 
   init()
-  while (is.finite(n))
+  while (is.finite(node))
   {
-    target.summary(n)
-    target.value(n)
-    if (!stop.criteria(n))
-      if (split.select(n)<Inf)
-        split.apply(n)
-    n <- next.node(n)
+    target.summary(node)
+    target.value(node)
+    if (!stop.criteria(node))
+      if (split.select(node)<Inf)
+        split.apply(node)
+    node <- next.node(node)
   }
   `class<-`(tree, "regtree.frac")
 }
@@ -3888,39 +3919,39 @@ as.data.frame(treem)
 ## with missing value support using fractional instances
 predict.regtree.frac <- function(tree, data)
 {
-  nmn <- function(n) { nodemap[,"node"]==n }  # nodemap entries for node n
+  nmn <- function(node) { nodemap[,"node"]==node }  # nodemap entries for node node
 
-  descend <- function(n)
+  descend <- function(node)
   {
-    if (!is.na(tree$attribute[tree$node==n]))  # unless reached a leaf
+    if (!is.na(tree$attribute[tree$node==node]))  # unless reached a leaf
     {
-      av <- data[nodemap[,"instance"],tree$attribute[tree$node==n]]
-      cond <- if (is.numeric(av)) av<=as.numeric(tree$value[tree$node==n])
-              else av==tree$value[tree$node==n]
+      av <- data[nodemap[,"instance"],tree$attribute[tree$node==node]]
+      cond <- if (is.numeric(av)) av<=as.numeric(tree$value[tree$node==node])
+              else av==tree$value[tree$node==node]
       cond1 <- !is.na(av) & cond   # true split outcome
       cond0 <- !is.na(av) & !cond  # false split outcome
 
-      nodemap[nmn(n) & cond1, "node"] <<- 2*n
-      nodemap[nmn(n) & cond0, "node"] <<- 2*n+1
+      nodemap[nmn(node) & cond1, "node"] <<- 2*node
+      nodemap[nmn(node) & cond0, "node"] <<- 2*node+1
 
-      if (sum(nodemap[nmn(n) & is.na(av), "weight"])>0)
+      if (sum(nodemap[nmn(node) & is.na(av), "weight"])>0)
       {
-        n1 <- tree$count[tree$node==2*n]
-        n0 <- tree$count[tree$node==2*n+1]
+        n1 <- tree$count[tree$node==2*node]
+        n0 <- tree$count[tree$node==2*node+1]
         p1 <- if (n1+n0>0) n1/(n1+n0) else 0.5
         p0 <- 1-p1
 
-        newnn <- nodemap[nmn(n) & is.na(av),,drop=FALSE]
-        nodemap[nmn(n) & is.na(av),"weight"] <<-
-          p1*nodemap[nmn(n) & is.na(av),"weight"]
-        nodemap[nmn(n) & is.na(av), "node"] <<- 2*n
+        newnn <- nodemap[nmn(node) & is.na(av),,drop=FALSE]
+        nodemap[nmn(node) & is.na(av),"weight"] <<-
+          p1*nodemap[nmn(node) & is.na(av),"weight"]
+        nodemap[nmn(node) & is.na(av), "node"] <<- 2*node
         newnn[,"weight"] <- p0*newnn[,"weight"]
-        newnn[,"node"] <- 2*n+1
+        newnn[,"node"] <- 2*node+1
         nodemap <<- rbind(nodemap, newnn)
       }
 
-      descend(2*n)
-      descend(2*n+1)
+      descend(2*node)
+      descend(2*node+1)
     }
   }
 
@@ -3947,35 +3978,35 @@ grow.modtree <- function(formula, data, minvar=0.005, minsplit=2, maxdepth=8)
                         count=NA, mean=NA, variance=NA)
     models <<- list()
     nodemap <<- rep(1, nrow(data))
-    n <<- 1
+    node <<- 1
   }
 
-  next.node <- function(n)
+  next.node <- function(node)
   {
-    if (any(opn <- tree$node>n))
+    if (any(opn <- tree$node>node))
       min(tree$node[opn])
     else Inf
   }
 
-  target.summary <- function(n)
+  target.summary <- function(node)
   {
-    tree$count[tree$node==n] <<- sum(nodemap==n)
-    tree$mean[tree$node==n] <<- mean(data[[target]][nodemap==n])
-    tree$variance[tree$node==n] <<- var1(data[[target]][nodemap==n])
+    tree$count[tree$node==node] <<- sum(nodemap==node)
+    tree$mean[tree$node==node] <<- mean(data[[target]][nodemap==node])
+    tree$variance[tree$node==node] <<- var1(data[[target]][nodemap==node])
   }
 
-  model <- function(n)
+  model <- function(node)
   {
-    attrs <- drop1val(attributes, data[nodemap==n,])
+    attrs <- drop1val(attributes, data[nodemap==node,])
     models <<- c(models,
                  list(lm(make.formula(target, if (length(attrs)==0) 1 else attrs),
-                         data[nodemap==n,])))
+                         data[nodemap==node,])))
   }
 
-  stop.criteria <- function(n)
+  stop.criteria <- function(node)
   {
-    n>=2^maxdepth || tree$count[tree$node==n]<minsplit ||
-      tree$variance[tree$node==n]<minvar
+    node>=2^maxdepth || tree$count[tree$node==node]<minsplit ||
+      tree$variance[tree$node==node]<minvar
   }
 
   split.eval <- function(av, sv, tv)
@@ -3991,12 +4022,12 @@ grow.modtree <- function(formula, data, minvar=0.005, minsplit=2, maxdepth=8)
       Inf
   }
 
-  split.select <- function(n)
+  split.select <- function(node)
   {
     splits <- data.frame()
     for (attribute in attributes)
     {
-      uav <- sort(unique(data[nodemap==n,attribute]))
+      uav <- sort(unique(data[nodemap==node,attribute]))
       if (length(uav)>1)
         splits <- rbind(splits,
                         data.frame(attribute=attribute,
@@ -4009,41 +4040,41 @@ grow.modtree <- function(formula, data, minvar=0.005, minsplit=2, maxdepth=8)
     if (nrow(splits)>0)
       splits$eval <- sapply(1:nrow(splits),
                             function(s)
-                            split.eval(data[nodemap==n,splits$attribute[s]],
+                            split.eval(data[nodemap==node,splits$attribute[s]],
                                        splits$value[s],
-                                       data[nodemap==n,target]))
+                                       data[nodemap==node,target]))
     if ((best.eval <- min(splits$eval))<Inf)
-      tree[tree$node==n,2:3] <<- splits[which.min(splits$eval),1:2]
+      tree[tree$node==node,2:3] <<- splits[which.min(splits$eval),1:2]
     best.eval
   }
 
-  split.apply <- function(n)
+  split.apply <- function(node)
   {
     tree <<- rbind(tree,
-                   data.frame(node=(2*n):(2*n+1), attribute=NA, value=NA,
+                   data.frame(node=(2*node):(2*node+1), attribute=NA, value=NA,
                               count=NA, mean=NA, variance=NA))
 
-    av <- data[[tree$attribute[tree$node==n]]]
+    av <- data[[tree$attribute[tree$node==node]]]
     cond <- !is.na(av) & (if (is.numeric(av))
-                            av<=as.numeric(tree$value[tree$node==n])
-                          else av==tree$value[tree$node==n])
-    nodemap[nodemap==n & cond] <<- 2*n
-    nodemap[nodemap==n & !cond] <<- 2*n+1
+                            av<=as.numeric(tree$value[tree$node==node])
+                          else av==tree$value[tree$node==node])
+    nodemap[nodemap==node & cond] <<- 2*node
+    nodemap[nodemap==node & !cond] <<- 2*node+1
   }
 
-  tree <- models <- nodemap <- n <- NULL
+  tree <- models <- nodemap <- node <- NULL
   target <- y.var(formula)
   attributes <- x.vars(formula, data)
 
   init()
-  while (is.finite(n))
+  while (is.finite(node))
   {
-    target.summary(n)
-    model(n)
-    if (! stop.criteria(n))
-      if (split.select(n)<Inf)
-        split.apply(n)
-    n <- next.node(n)
+    target.summary(node)
+    model(node)
+    if (! stop.criteria(node))
+      if (split.select(node)<Inf)
+        split.apply(node)
+    node <- next.node(node)
   }
   `class<-`(list(structure=tree, models=models), "modtree")
 }
@@ -4058,28 +4089,28 @@ mtree$structure
 ## model tree prediction
 predict.modtree <- function(tree, data, m=10)
 {
-  descend <- function(n)
+  descend <- function(node)
   {
-    predn <- predict(models[[which(tree$node==n)]], data[nodemap==n,])
-    if (is.na(tree$attribute[tree$node==n]))  # reached a leaf
-      pred[nodemap==n] <<- predn
+    predn <- predict(models[[which(tree$node==node)]], data[nodemap==node,])
+    if (is.na(tree$attribute[tree$node==node]))  # reached a leaf
+      pred[nodemap==node] <<- predn
     else
     {
-      av <- data[[tree$attribute[tree$node==n]]]
+      av <- data[[tree$attribute[tree$node==node]]]
       cond <- !is.na(av) & (if (is.numeric(av))
-                              av<=as.numeric(tree$value[tree$node==n])
-                            else av==tree$value[tree$node==n])
-      nodemap[left <- nodemap==n & cond] <<- 2*n
-      nodemap[right <- nodemap==n & !cond] <<- 2*n+1
-      descend(2*n)
-      descend(2*n+1)
+                              av<=as.numeric(tree$value[tree$node==node])
+                            else av==tree$value[tree$node==node])
+      nodemap[left <- nodemap==node & cond] <<- 2*node
+      nodemap[right <- nodemap==node & !cond] <<- 2*node+1
+      descend(2*node)
+      descend(2*node+1)
 
       leftn <- match(which(left), which(left|right))
       rightn <- match(which(right), which(left|right))
-      pred[left] <<- (tree$count[tree$node==2*n]*pred[left] + m*predn[leftn])/
-                     (tree$count[tree$node==2*n]+m)
-      pred[right] <<- (tree$count[tree$node==2*n+1]*pred[right] + m*predn[rightn])/
-                      (tree$count[tree$node==2*n+1]+m)
+      pred[left] <<- (tree$count[tree$node==2*node]*pred[left] + m*predn[leftn])/
+                     (tree$count[tree$node==2*node]+m)
+      pred[right] <<- (tree$count[tree$node==2*node+1]*pred[right] + m*predn[rightn])/
+                      (tree$count[tree$node==2*node+1]+m)
      }
   }
 
@@ -4194,11 +4225,11 @@ loss.abs <- function(pred.y, true.y) { abs(true.y-pred.y) }
 
 loss.square <- function(pred.y, true.y) { (true.y-pred.y)^2 }
 
-loss.asymmetric <- function(loss, p=1, n=1)
+loss.asymmetric <- function(loss, p=1, node=1)
 {
   function(pred.y, true.y)
   {
-    ifelse(res(pred.y, true.y)>0, p*loss(pred.y, true.y), n*loss(pred.y, true.y))
+    ifelse(res(pred.y, true.y)>0, p*loss(pred.y, true.y), node*loss(pred.y, true.y))
   }
 }
 
@@ -5850,28 +5881,28 @@ grow.randdectree <- function(formula, data, ns=0,
     n <<- 1
   }
 
-  next.node <- function(n)
+  next.node <- function(node)
   {
-    if (any(opn <- tree$node>n))
+    if (any(opn <- tree$node>node))
       min(tree$node[opn])
     else Inf
   }
 
-  class.distribution <- function(n)
+  class.distribution <- function(node)
   {
-    tree[tree$node==n,"count"] <<- sum(nodemap==n)
-    tree[tree$node==n,cprobs] <<- pdisc(data[nodemap==n,class])
+    tree[tree$node==node,"count"] <<- sum(nodemap==node)
+    tree[tree$node==node,cprobs] <<- pdisc(data[nodemap==node,class])
   }
 
-  class.label <- function(n)
+  class.label <- function(node)
   {
-    tree$class[tree$node==n] <<- which.max(tree[tree$node==n,cprobs])
+    tree$class[tree$node==node] <<- which.max(tree[tree$node==node,cprobs])
   }
 
-  stop.criteria <- function(n)
+  stop.criteria <- function(node)
   {
-    n>=2^maxdepth || tree[tree$node==n,"count"]<minsplit ||
-      max(tree[tree$node==n,cprobs])>maxprob
+    node>=2^maxdepth || tree[tree$node==node,"count"]<minsplit ||
+      max(tree[tree$node==node,cprobs])>maxprob
   }
 
   split.eval <- function(av, sv, cl)
@@ -5889,12 +5920,12 @@ grow.randdectree <- function(formula, data, ns=0,
       Inf
   }
 
-  split.select <- function(n)
+  split.select <- function(node)
   {
     splits <- data.frame()
     for (attribute in sample(attributes, ns))
     {
-      uav <- sort(unique(data[nodemap==n,attribute]))
+      uav <- sort(unique(data[nodemap==node,attribute]))
       if (length(uav)>1)
         splits <- rbind(splits,
                         data.frame(attribute=attribute,
@@ -5907,31 +5938,31 @@ grow.randdectree <- function(formula, data, ns=0,
     if (nrow(splits)>0)
       splits$eval <- sapply(1:nrow(splits),
                             function(s)
-                            split.eval(data[nodemap==n,splits$attribute[s]],
+                            split.eval(data[nodemap==node,splits$attribute[s]],
                                        splits$value[s],
-                                       data[nodemap==n,class]))
+                                       data[nodemap==node,class]))
     if ((best.eval <- min(splits$eval))<Inf)
-      tree[tree$node==n,2:3] <<- splits[which.min(splits$eval),1:2]
+      tree[tree$node==node,2:3] <<- splits[which.min(splits$eval),1:2]
     return(best.eval)
   }
 
-  split.apply <- function(n)
+  split.apply <- function(node)
   {
     tree <<- rbind(tree,
-                   data.frame(node=(2*n):(2*n+1),
+                   data.frame(node=(2*node):(2*node+1),
                               attribute=NA, value=NA, class=NA, count=NA,
                               `names<-`(rep(list(NA), length(clabs)),
                                         paste("p", clabs, sep="."))))
 
-    av <- data[[tree$attribute[tree$node==n]]]
+    av <- data[[tree$attribute[tree$node==node]]]
     cond <- !is.na(av) & (if (is.numeric(av))
-                            av<=as.numeric(tree$value[tree$node==n])
-                          else av==tree$value[tree$node==n])
-    nodemap[nodemap==n & cond] <<- 2*n
-    nodemap[nodemap==n & !cond] <<- 2*n+1
+                            av<=as.numeric(tree$value[tree$node==node])
+                          else av==tree$value[tree$node==node])
+    nodemap[nodemap==node & cond] <<- 2*node
+    nodemap[nodemap==node & !cond] <<- 2*node+1
   }
 
-  tree <- nodemap <- n <- NULL
+  tree <- nodemap <- node <- NULL
   clabs <- cprobs <- NULL
   class <- y.var(formula)
   attributes <- x.vars(formula, data)
@@ -5939,14 +5970,14 @@ grow.randdectree <- function(formula, data, ns=0,
                       clip.val(ns, 1, length(attributes)))
 
   init()
-  while (is.finite(n))
+  while (is.finite(node))
   {
-    class.distribution(n)
-    class.label(n)
-    if (!stop.criteria(n))
-      if (split.select(n)<Inf)
-        split.apply(n)
-    n <- next.node(n)
+    class.distribution(node)
+    class.label(node)
+    if (!stop.criteria(node))
+      if (split.select(node)<Inf)
+        split.apply(node)
+    node <- next.node(node)
   }
   tree$class <- clabs[tree$class]
   `class<-`(tree, "dectree")
@@ -5964,32 +5995,32 @@ grow.randregtree <- function(formula, data, ns=0,
     tree <<- data.frame(node=1, attribute=NA, value=NA, target=NA,
                         count=NA, mean=NA, variance=NA)
     nodemap <<- rep(1, nrow(data))
-    n <<- 1
+    node <<- 1
   }
 
-  next.node <- function(n)
+  next.node <- function(node)
   {
-    if (any(opn <- tree$node>n))
+    if (any(opn <- tree$node>node))
       min(tree$node[opn])
     else Inf
   }
 
-  target.summary <- function(n)
+  target.summary <- function(node)
   {
-    tree$count[tree$node==n] <<- sum(nodemap==n)
-    tree$mean[tree$node==n] <<- mean(data[nodemap==n,target])
-    tree$variance[tree$node==n] <<- var1(data[nodemap==n,target])
+    tree$count[tree$node==node] <<- sum(nodemap==node)
+    tree$mean[tree$node==node] <<- mean(data[nodemap==node,target])
+    tree$variance[tree$node==node] <<- var1(data[nodemap==node,target])
   }
 
-  target.value <- function(n)
+  target.value <- function(node)
   {
-    tree$target[tree$node==n] <<- tree$mean[tree$node==n]
+    tree$target[tree$node==node] <<- tree$mean[tree$node==node]
   }
 
-  stop.criteria <- function(n)
+  stop.criteria <- function(node)
   {
-    n>=2^maxdepth || tree$count[tree$node==n]<minsplit ||
-      tree$variance[tree$node==n]<minvar
+    node>=2^maxdepth || tree$count[tree$node==node]<minsplit ||
+      tree$variance[tree$node==node]<minvar
   }
 
   split.eval <- function(av, sv, tv)
@@ -6005,12 +6036,12 @@ grow.randregtree <- function(formula, data, ns=0,
       Inf
   }
 
-  split.select <- function(n)
+  split.select <- function(node)
   {
     splits <- data.frame()
     for (attribute in sample(attributes, ns))
     {
-      uav <- sort(unique(data[nodemap==n,attribute]))
+      uav <- sort(unique(data[nodemap==node,attribute]))
       if (length(uav)>1)
         splits <- rbind(splits,
                         data.frame(attribute=attribute,
@@ -6023,43 +6054,43 @@ grow.randregtree <- function(formula, data, ns=0,
     if (nrow(splits)>0)
       splits$eval <- sapply(1:nrow(splits),
                             function(s)
-                            split.eval(data[nodemap==n,splits$attribute[s]],
+                            split.eval(data[nodemap==node,splits$attribute[s]],
                                        splits$value[s],
-                                       data[nodemap==n,target]))
+                                       data[nodemap==node,target]))
     if ((best.eval <- min(splits$eval))<Inf)
-      tree[tree$node==n,2:3] <<- splits[which.min(splits$eval),1:2]
+      tree[tree$node==node,2:3] <<- splits[which.min(splits$eval),1:2]
     best.eval
   }
 
-  split.apply <- function(n)
+  split.apply <- function(node)
   {
     tree <<- rbind(tree,
-                   data.frame(node=(2*n):(2*n+1), attribute=NA, value=NA, target=NA,
+                   data.frame(node=(2*node):(2*node+1), attribute=NA, value=NA, target=NA,
                               count=NA, mean=NA, variance=NA))
 
-    av <- data[[tree$attribute[tree$node==n]]]
+    av <- data[[tree$attribute[tree$node==node]]]
     cond <- !is.na(av) & (if (is.numeric(av))
-                            av<=as.numeric(tree$value[tree$node==n])
-                          else av==tree$value[tree$node==n])
-    nodemap[nodemap==n & cond] <<- 2*n
-    nodemap[nodemap==n & !cond] <<- 2*n+1
+                            av<=as.numeric(tree$value[tree$node==node])
+                          else av==tree$value[tree$node==node])
+    nodemap[nodemap==node & cond] <<- 2*node
+    nodemap[nodemap==node & !cond] <<- 2*node+1
   }
 
-  tree <- nodemap <- n <- NULL
+  tree <- nodemap <- node <- NULL
   target <- y.var(formula)
   attributes <- x.vars(formula, data)
   ns <- ifelse(ns==0, round(length(attributes)/3),
                clip.val(ns, 1, length(attributes)))
 
   init()
-  while (is.finite(n))
+  while (is.finite(node))
   {
-    target.summary(n)
-    target.value(n)
-    if (!stop.criteria(n))
-      if (split.select(n)<Inf)
-        split.apply(n)
-    n <- next.node(n)
+    target.summary(node)
+    target.value(node)
+    if (!stop.criteria(node))
+      if (split.select(node)<Inf)
+        split.apply(node)
+    node <- next.node(node)
   }
   `class<-`(tree, "regtree")
 }
@@ -9243,10 +9274,10 @@ library(dmr.trans)
 library(rpart)
 library(rpart.plot)
 library(randomForest)
-
-census <- read.table("../Data/census-income.data",
+#https://kdd.ics.uci.edu/databases/census-income/census-income.html
+census <- read.table("./census-income.data",
                      sep=",", na.strings="?", strip.white=TRUE)
-census.test <- read.table("../Data/census-income.test",
+census.test <- read.table("./census-income.test",
                           sep=",", na.strings="?", strip.white=TRUE)
 names(census) <- c("age",
                    "class.of.worker",
@@ -9333,6 +9364,7 @@ auc(ci.tree.d.roc)
 
 ci.tree.d.cut06 <- ci.tree.d.roc$cutoff[ci.tree.d.roc$tpr>0.6]
 
+#error not found ci.tree.d.prob
 ci.tree.d.cm06 <- confmat(cutclass(ci.tree.d.prob, ci.tree.d.cut06[1], ci.labels),
                           ci.val$income)
 ci.tree.d.tpr06 <- tpr(ci.tree.d.cm06)
