@@ -14,3 +14,11 @@ docker run -d -p 8787:8787 -e USER=guest -e USERID=1001 -e GROUPID=100 -v $(pwd)
 https://github.com/pwasiewi/dokerz/blob/master/rstudio/linux_docker_in_windows10.png
 
 docker run -d -p 8787:8787 -v c:/Users/Piotr/remote:/home/rstudio 42n4/rstudio
+
+
+#To turn off hyper-v in powershell after removing docker for windows in order to use e.g. Virtualbox, Vmware
+
+Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
+
+#In order to use VirtualBox with Docker use Docker ToolBox: https://www.docker.com/products/docker-toolbox
+#Docker for Windows always use hyper-v disabling other vm providers
