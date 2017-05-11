@@ -22,6 +22,7 @@ Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
 
 ### In order to use VirtualBox with Docker use Docker ToolBox: https://www.docker.com/products/docker-toolbox
 
-### Docker for Windows always use hyper-v disabling other vm providers
+#### Docker for Windows always use hyper-v disabling other vm providers
 
-### https://forums.docker.com/t/volume-mounts-in-windows-does-not-work/10693/141
+##### https://forums.docker.com/t/volume-mounts-in-windows-does-not-work/10693/141
+##### https://coderwall.com/p/2rpbba/docker-create-a-bridge-and-shared-network
