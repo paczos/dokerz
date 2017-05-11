@@ -13,8 +13,7 @@ docker run -d -p 8787:8787 -e USER=guest -e USERID=1001 -e GROUPID=100 -v $(pwd)
 #For Windows Docker with Linux containers enabled and Powershell and shared disk c: in docker settings
 https://github.com/pwasiewi/dokerz/blob/master/rstudio/linux_docker_in_windows10.png
 
-docker run -d -p 8787:8787 -v c:/Users/Piotr/remote:/home/rstudio 42n4/rstudio
-
+docker run -d -p 8787:8787 --name=rstudio -v c:/Users/Piotr/remote:/home/rstudio 42n4/rstudio
 
 #To turn off hyper-v in powershell after removing docker for windows in order to use e.g. Virtualbox, Vmware
 
