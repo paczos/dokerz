@@ -21,4 +21,5 @@ docker run -d -p 8787:8787 -v c:/Users/Piotr/remote:/home/rstudio 42n4/rstudio
 Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
 
 #In order to use VirtualBox with Docker use Docker ToolBox: https://www.docker.com/products/docker-toolbox
+
 #Docker for Windows always use hyper-v disabling other vm providers
