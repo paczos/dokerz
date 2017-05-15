@@ -59,7 +59,7 @@ RUN install2.r  \
     rgl
 RUN install2.r  \
     --deps TRUE \
-    nnet
+    nnet knitr
 ## Clean up from R source install
 RUN cd / \
   && BUILDDEPS="curl \
