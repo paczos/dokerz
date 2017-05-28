@@ -1,8 +1,8 @@
-FROM debian:jessie
+FROM debian:stretch
 
 ARG BUILD_DATE
-ENV LC_ALL pl_PL.UTF-8
-ENV LANG pl_PL.UTF-8
+ENV LC_ALL en_US.UTF-8
+ENV LANG en_US.UTF-8
 ENV TERM xterm
 
 ## dependencies
@@ -17,12 +17,12 @@ RUN apt-get update \
     gsfonts \
     libbz2-1.0 \
     libcurl3 \
-    libicu52 \
+    libicu57 \
     libjpeg62-turbo \
     libopenblas-dev \
     libpangocairo-1.0-0 \
     libpcre3 \
-    libpng12-0 \
+    libpng16-16 \
     libtiff5 \
     liblzma5 \
     locales \
@@ -30,9 +30,9 @@ RUN apt-get update \
     unzip \
     zip \
     zlib1g \
-  && echo "pl_PL.UTF-8 UTF-8" >> /etc/locale.gen \
-  && locale-gen pl_PL.utf8 \
-  && /usr/sbin/update-locale LANG=pl_PL.UTF-8 \
+  && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+  && locale-gen en_US.utf8 \
+  && /usr/sbin/update-locale LANG=en_US.UTF-8 \
   && BUILDDEPS="curl \
     default-jdk \
     libbz2-dev \
@@ -68,7 +68,7 @@ RUN apt-get update \
   && svn co https://svn.r-project.org/R/trunk R-devel \
   && cd R-devel \
   ## Set compiler flags
-  && R_PAPERSIZE=A4 \
+  && R_PAPERSIZE=letter \
     R_BATCHSAVE="--no-save --no-restore" \
     R_BROWSER=xdg-open \
     PAGER=/usr/bin/pager \
@@ -100,7 +100,7 @@ RUN apt-get update \
   && echo "R_LIBS_USER='/usr/local/lib/R/site-library'" >> /usr/local/lib/R/etc/Renviron \
   && echo "R_LIBS=\${R_LIBS-'/usr/local/lib/R/site-library:/usr/local/lib/R/library:/usr/lib/R/library'}" >> /usr/local/lib/R/etc/Renviron \
   ## install packages from date-locked MRAN snapshot of CRAN
-  && [ -z "$BUILD_DATE" ] && BUILD_DATE=$(TZ="Europe/Warsaw" date -I) || true \
+  && [ -z "$BUILD_DATE" ] && BUILD_DATE=$(TZ="America/Los_Angeles" date -I) || true \
   && MRAN=https://mran.microsoft.com/snapshot/${BUILD_DATE} \
   && echo MRAN=$MRAN >> /etc/environment \
   && export MRAN=$MRAN \
@@ -119,4 +119,5 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 CMD ["R"]
+
 
