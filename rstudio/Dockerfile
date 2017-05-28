@@ -59,41 +59,43 @@ RUN install2.r  \
     rgl
 RUN install2.r  \
     --deps TRUE \
-    nnet knitr
-## Clean up from R source install
-RUN cd / \
-  && BUILDDEPS="curl \
-    default-jdk \
-    libbz2-dev \
-    libcairo2-dev \
-    libcurl4-openssl-dev \
-    libpango1.0-dev \
-    libjpeg-dev \
-    libicu-dev \
-    libpcre3-dev \
-    libpng-dev \
-    libreadline-dev \
-    libtiff5-dev \
-    liblzma-dev \
-    libx11-dev \
-    libxt-dev \
-    perl \
-    subversion \
-    tcl8.5-dev \
-    tk8.5-dev \
-    texinfo \
-    texlive-extra-utils \
-    texlive-fonts-recommended \
-    texlive-fonts-extra \
-    texlive-latex-recommended \
-    x11proto-core-dev \
-    xauth \
-    xfonts-base \
-    xvfb \
-    zlib1g-dev" \
-&& rm -rf /tmp/* \
-&& apt-get remove --purge -y $BUILDDEPS \
+    nnet knitr filehash
+RUN apt-get install -y texlive-luatex texlive-latex-base
+RUN installGithub.r yihui/tikzDevice
+RUN rm -rf /tmp/* \
+#&& apt-get remove --purge -y $BUILDDEPS \
 && apt-get autoremove -y \
 && apt-get autoclean -y \
 && rm -rf /var/lib/apt/lists/*
-
+## Clean up from R source install
+#RUN cd / \
+#  && BUILDDEPS="curl \
+#    default-jdk \
+#    libbz2-dev \
+#    libcairo2-dev \
+#    libcurl4-openssl-dev \
+#    libpango1.0-dev \
+#    libjpeg-dev \
+#    libicu-dev \
+#    libpcre3-dev \
+#    libpng-dev \
+#    libreadline-dev \
+#    libtiff5-dev \
+#    liblzma-dev \
+#    libx11-dev \
+#    libxt-dev \
+#    perl \
+#    subversion \
+#    tcl8.5-dev \
+#    tk8.5-dev \
+#    texinfo \
+#    texlive-fonts-extra \
+#    texlive-extra-utils \
+#    texlive-fonts-recommended \
+#    texlive-latex-recommended \
+#    x11proto-core-dev \
+#    xauth \
+#    xfonts-base \
+#    xvfb \
+#    zlib1g-dev" \
+#latex for tikxdevice
