@@ -26,7 +26,14 @@ Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
 ##### https://forums.docker.com/t/volume-mounts-in-windows-does-not-work/10693/141
 ##### https://coderwall.com/p/2rpbba/docker-create-a-bridge-and-shared-network
 
-### Run bash in a docker
+### Run bash in the docker
 
 docker exec -it rstudio /bin/bash
 
+### Update the docker
+
+docker pull 42n4/rstudio
+
+### Stop the running docker
+
+docker rm rstudio -f
