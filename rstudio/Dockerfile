@@ -62,7 +62,8 @@ RUN install2.r  \
     --deps TRUE \
     nnet knitr filehash
 RUN installGithub.r yihui/tikzDevice
-RUN install2.r clusterGeneration neuralnet RSNNS rockchalk fifer 
+RUN install2.r clusterGeneration neuralnet RSNNS rockchalk fifer
+RUN install2.r arules
 RUN rm -rf /tmp/* \
 #&& apt-get remove --purge -y $BUILDDEPS \
 && apt-get autoremove -y \
