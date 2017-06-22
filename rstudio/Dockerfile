@@ -1,8 +1,7 @@
 FROM 42n4/rstudio-dev:latest
-RUN apt-get update && apt-get install -y apt-utils
+RUN apt-get update && apt-get dist-upgrade -y  && apt-get install -y apt-utils
 RUN apt-get install -y --no-install-recommends libssl-dev libssh2-1-dev zlib1g-dev
-RUN install2.r  \
-    --deps TRUE \
+RUN install2.r  --deps TRUE \
     devtools    \
     remotes     \
     e1071       \
@@ -21,12 +20,12 @@ RUN apt-get install -y --no-install-recommends default-jdk postgresql-9.6 postgr
 RUN apt-get install -y --no-install-recommends libpcre3 libpcre3-dev lzma libbz2-dev liblzma-dev libicu-dev libmagick++-dev libpng-dev
 #apt-get --yes --fix-broken install
 RUN R CMD javareconf
-RUN install2.r  \
-    --deps TRUE \
+RUN install2.r --deps TRUE \
     reshape	\
     sqldf	\
     dplyr	\
     party	\
+    partykit	\
     rgl	 	\
     scatterplot3d\
     fpc		\
@@ -39,31 +38,48 @@ RUN install2.r  \
     gbm		\
     mda		\
     klaR	\
-    caret	\
     tseries	\
     forecast	\
     sets	\
+    arules	\
+    doMC	\
+    ranger	\
     TTR
 RUN apt-get install -y tk8.5 libxml2-dev tk-dev
 RUN installGithub.r 42n4/tkrplot
-RUN install2.r  \
-    --deps TRUE \
+RUN install2.r --deps TRUE \
     ade4
-RUN install2.r  \
-    --deps TRUE \
+RUN install2.r --deps TRUE \
     urca timeSeries fBasics
 RUN installGithub.r 42n4/fUnitRoots
 RUN apt-get install -y --no-install-recommends freeglut3 freeglut3-dev libglew-dev libglu1-mesa libglu1-mesa-dev libgl1-mesa-glx libgl1-mesa-dev
-RUN install2.r  \
-    --deps TRUE \
+RUN install2.r --deps TRUE \
     rgl
 RUN apt-get install -y --no-install-recommends texlive-luatex texlive-latex-base
-RUN install2.r  \
-    --deps TRUE \
-    nnet knitr filehash
+RUN install2.r --deps TRUE \
+    knitr filehash
 RUN installGithub.r yihui/tikzDevice
-RUN install2.r clusterGeneration neuralnet RSNNS rockchalk fifer
-RUN install2.r arules doMC ranger AppliedPredictiveModeling partykit
+RUN install2.r --deps TRUE \
+    clusterGeneration	\
+    nnet 	\
+    neuralnet 	\
+    RSNNS 	\
+    rockchalk 	\
+    fifer 	\
+    h2o
+#RUN installGithub.r topepo/caret/pkg/caret
+RUN install2.r --deps TRUE \
+    AppliedPredictiveModeling \ 
+    fastAdaboost\
+    rpartScore 	\
+    adabag	\
+    C50		\
+    RWeka	\
+    xgboost	\
+    pROC	\
+    DMwR	\
+    ROSE	\
+    Boruta	
 RUN rm -rf /tmp/* \
 #&& apt-get remove --purge -y $BUILDDEPS \
 && apt-get autoremove -y \
