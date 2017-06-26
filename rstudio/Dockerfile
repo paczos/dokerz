@@ -71,6 +71,7 @@ RUN install2.r --deps TRUE \
 RUN install2.r --deps TRUE \
     AppliedPredictiveModeling \ 
     fastAdaboost\
+    rotationForest\
     rpartScore 	\
     adabag	\
     C50		\
@@ -79,7 +80,17 @@ RUN install2.r --deps TRUE \
     pROC	\
     DMwR	\
     ROSE	\
-    Boruta	
+    Boruta	\
+    Metrics 	\
+    hydroGOF	\
+    bartMachine \
+    ada 	\
+    bst		\
+    deepboost	\
+    evtree	\
+    nodeHarvest	
+RUN install2.r --deps TRUE \
+    obliqueRF
 RUN rm -rf /tmp/* \
 #&& apt-get remove --purge -y $BUILDDEPS \
 && apt-get autoremove -y \
