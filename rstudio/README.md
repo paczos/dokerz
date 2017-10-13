@@ -18,6 +18,11 @@ docker run -d -p 8787:8787 --name=rstudio --restart=always -v c:/Users/Piotr/rem
 ### To turn off hyper-v in powershell after removing docker for windows in order to use e.g. Virtualbox, Vmware
 
 Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
+### or
+dism.exe /Online /Disable-Feature:Microsoft-Hyper-V-All
+
+### To turn on hyper-v in powershell
+dism.exe /Online /Enable-Feature:Microsoft-Hyper-V /All
 
 ### In order to use VirtualBox with Docker use Docker ToolBox: https://www.docker.com/products/docker-toolbox
 
