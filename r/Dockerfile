@@ -3,7 +3,7 @@ FROM debian:sid
 ARG R_VERSION
 ARG BUILD_DATE
 ENV BUILD_DATE ${BUILD_DATE:-}
-ENV R_VERSION ${R_VERSION:-3.4.0}
+ENV R_VERSION ${R_VERSION:-3.4.2}
 ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV TERM xterm
@@ -123,5 +123,3 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 CMD ["R"]
-
-

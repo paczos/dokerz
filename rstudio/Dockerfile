@@ -2,6 +2,7 @@ FROM 42n4/rstudio-dev:latest
 RUN apt-get update && apt-get dist-upgrade -y  && apt-get install -y apt-utils
 RUN apt-get install -y --no-install-recommends libssl-dev libssh2-1-dev zlib1g-dev
 RUN install2.r  --deps TRUE \
+    codetools   \
     devtools    \
     remotes     \
     e1071       \
@@ -90,7 +91,24 @@ RUN install2.r --deps TRUE \
     evtree	\
     nodeHarvest	
 RUN install2.r --deps TRUE \
-    obliqueRF
+    obliqueRF   \
+    pbapply     \
+    readbitmap  \
+    Cairo       \
+    downloader 
+RUN installGithub.r dahtah/imager
+RUN installGithub.r rstudio/reticulate
+#RUN apt-get install -y --no-install-recommends libopencv-dev python-opencv
+RUN apt-get install -y libopencv-dev python-opencv #netcdf hdf5
+RUN installGithub.r swarm-lab/videoplayR
+#RUN apt-get install -y python-rpy
+#RUN installGithub.r gaborcsardi/pkgconfig
+#RUN installGithub.r igraph/rigraph
+RUN install2.r -r http://bioconductor.org/packages/3.5/bioc --deps TRUE \ 
+    KEGGgraph \
+    biomaRt
+RUN install2.r --deps TRUE \
+    mboost
 RUN rm -rf /tmp/* \
 #&& apt-get remove --purge -y $BUILDDEPS \
 && apt-get autoremove -y \
