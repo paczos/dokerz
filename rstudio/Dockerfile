@@ -109,6 +109,8 @@ RUN install2.r -r http://bioconductor.org/packages/3.5/bioc --deps TRUE \
     biomaRt
 RUN install2.r --deps TRUE \
     mboost
+RUN apt-get install -y python-numpy python-scipy python-matplotlib  python3-numpy python3-scipy python3-matplotlib
+RUN apt-get install -y python3-opencv
 RUN rm -rf /tmp/* \
 #&& apt-get remove --purge -y $BUILDDEPS \
 && apt-get autoremove -y \

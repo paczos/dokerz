@@ -1,3 +1,4 @@
+source('imageFunctions.R')
 if (!require(devtools)) {
   install.packages("devtools")
 }
@@ -10,6 +11,7 @@ devtools::install_github("rstudio/reticulate")}
 
 library(videoplayR)
 
+imgr = readImg("twosmiles.png")
 # Take a picture and save it
 imgr = webcamImage(rollFrames = 10, 
                    showImage = FALSE,
