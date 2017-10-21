@@ -10,12 +10,12 @@ if (!require(reticulate)) {
 devtools::install_github("rstudio/reticulate")}
 
 library(videoplayR)
-
 imgr = readImg("twosmiles.png")
+writeImg("/home/guest/originalWebcamShot.png",imgr)
 # Take a picture and save it
-imgr = webcamImage(rollFrames = 10, 
-                   showImage = FALSE,
-                   saveImageToWD = 'originalWebcamShot.png')
+#imgr = webcamImage(rollFrames = 10, 
+#                   showImage = FALSE,
+#                   saveImageToWD = 'originalWebcamShot.png')
 
 # Run Python script to detect faces, draw rectangles, return new image
 system('python3 facialRecognition.py')
