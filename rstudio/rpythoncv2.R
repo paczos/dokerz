@@ -11,7 +11,7 @@ devtools::install_github("rstudio/reticulate")}
 
 library(videoplayR)
 imgr = readImg("twosmiles.png")
-writeImg("/home/guest/originalWebcamShot.png",imgr)
+writeImg("originalWebcamShot.png",imgr)
 # Take a picture and save it
 #imgr = webcamImage(rollFrames = 10, 
 #                   showImage = FALSE,
