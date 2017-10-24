@@ -66,3 +66,4 @@ str(imgconv)
 dev.off()
 grid.raster(imgconv, interpolate=FALSE)
 
+#https://tutel.me/c/programming/questions/44379525/r+reticulate+how+do+i+clear+a+python+object+from+memory
