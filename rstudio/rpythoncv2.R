@@ -52,6 +52,7 @@ os$getcwd()
 cv2 <- import("cv2")
 imgp = cv2$imread('originalWebcamShot.png')
 str(imgp)
+image(t(apply(imgp[,,1],2,rev)), axes=FALSE, col = grey(seq(0, 1, length = 256)))
 imgp01<-imgp/256
 dev.off()
 plot(c(0, 640), c(0, 480), type = "n", xlab = "", ylab = "")
@@ -66,4 +67,12 @@ str(imgconv)
 dev.off()
 grid.raster(imgconv, interpolate=FALSE)
 
-#https://tutel.me/c/programming/questions/44379525/r+reticulate+how+do+i+clear+a+python+object+from+memory
+# https://tutel.me/c/programming/questions/44379525/r+reticulate+how+do+i+clear+a+python+object+from+memory
+# https://rstudio.github.io/reticu…/articles/introduction.html
+# import numpy and specify no automatic Python to R conversion
+np <- import("numpy", convert = FALSE)
+# do some array manipulations with NumPy
+a <- np$array(c(1:4))
+sum <- a$cumsum()
+# convert to R explicitly at the end
+py_to_r(sum)
