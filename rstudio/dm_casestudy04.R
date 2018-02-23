@@ -253,7 +253,7 @@ get_time()
 
 ##########################################################################################################
 #ctree only tunes over mincriterion and ctree2 tunes over maxdepth (while fixing mincriterion = 0)
-caretctree <- train(method = 'ctree', 
+caretctree <- train(method = 'ctree2', 
                     x = ci.train[,-ncol(ci.train)], 
                     y = ci.train[,ncol(ci.train)]   
                     , weights=weights100
