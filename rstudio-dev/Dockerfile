@@ -2,7 +2,7 @@ FROM 42n4/r-dev:latest
 
 ARG RSTUDIO_VERSION
 ARG PANDOC_TEMPLATES_VERSION 
-ENV PANDOC_TEMPLATES_VERSION ${PANDOC_TEMPLATES_VERSION:-1.18}
+ENV PANDOC_TEMPLATES_VERSION ${PANDOC_TEMPLATES_VERSION:-2.1.1}
 
 ## Add RStudio binaries to PATH
 ENV PATH /usr/lib/rstudio-server/bin:$PATH
@@ -18,6 +18,7 @@ apt-get install -y --no-install-recommends \
     psmisc \
     python-setuptools \
     sudo \
+    curl \
     wget  
      
 

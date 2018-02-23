@@ -1,5 +1,5 @@
 FROM 42n4/rstudio-dev:latest
-RUN apt-get update && apt-get dist-upgrade -y  && apt-get install -y apt-utils
+RUN apt-get update && apt-get install -y apt-utils && apt-get dist-upgrade -y
 RUN apt-get install -y --no-install-recommends libssl-dev libssh2-1-dev zlib1g-dev
 RUN install2.r  --deps TRUE \
     codetools   \
@@ -17,7 +17,7 @@ RUN install2.r  --deps TRUE \
     randomForest
 RUN installGithub.r 42n4/dmr.data 42n4/dmr.util 42n4/dmr.claseval 42n4/dmr.stats 42n4/dmr.trans 42n4/dmr.linreg 42n4/dmr.regeval 42n4/dmr.dissim 42n4/dmr.dectree 42n4/dmr.linclas 42n4/dmr.disc 42n4/dmr.kcenters 42n4/dmr.cluseval
 RUN installGithub.r 42n4/dmr.regtree 42n4/dmr.attrsel 42n4/dmr.ensemble 42n4/dmr.kernel 42n4/dmr.bayes 42n4/dmr.hierclus 42n4/dmr.miscost 42n4/dmr.rpartutil
-RUN apt-get install -y --no-install-recommends default-jdk postgresql-9.6 postgresql-client-9.6 libmariadb-client-lgpl-dev postgresql-server-dev-9.6
+RUN apt-get install -y --no-install-recommends default-jdk postgresql-10 postgresql-client-10 libmariadbclient-dev postgresql-server-dev-10
 RUN apt-get install -y --no-install-recommends libpcre3 libpcre3-dev lzma libbz2-dev liblzma-dev libicu-dev libmagick++-dev libpng-dev
 #apt-get --yes --fix-broken install
 RUN R CMD javareconf
@@ -104,13 +104,14 @@ RUN installGithub.r swarm-lab/videoplayR
 #RUN apt-get install -y python-rpy
 #RUN installGithub.r gaborcsardi/pkgconfig
 #RUN installGithub.r igraph/rigraph
-RUN install2.r -r http://bioconductor.org/packages/3.5/bioc --deps TRUE \ 
+RUN install2.r -r http://bioconductor.org/packages/3.6/bioc --deps TRUE \ 
     KEGGgraph \
     biomaRt
 RUN install2.r --deps TRUE \
     mboost
 RUN apt-get install -y python-numpy python-scipy python-matplotlib  python3-numpy python3-scipy python3-matplotlib
-RUN apt-get install -y python3-opencv
+RUN apt-get install -y python3-opencv swi-prolog
+RUN installGithub.r 42n4/rolog
 RUN rm -rf /tmp/* \
 #&& apt-get remove --purge -y $BUILDDEPS \
 && apt-get autoremove -y \
