@@ -2,7 +2,7 @@
 library(dmr.claseval)
 library(dmr.util)
 library(dmr.trans)
-
+library(dmr.rpartutil)
 library(rpart)
 library(rpart.plot)
 library(randomForest)
