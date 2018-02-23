@@ -16,6 +16,7 @@ start.time <- Sys.time()
 #try to shift working point with cutclass to get better results
 #try other classifiers with priors or weights for class classes
 #at the end compare all roc curves of all used classifiers
+#e.g. https://rpubs.com/chengjiun/52658
 #some other measures are mentioned here:
 #https://geekoverdose.wordpress.com/2014/07/25/svm-classification-example-with-performance-measures-using-r-caret/
 #
