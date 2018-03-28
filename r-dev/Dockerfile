@@ -72,7 +72,7 @@ RUN apt-get update \
   && tar -xf R-${R_VERSION}.tar.gz \
   && cd R-${R_VERSION} \
   ## Set compiler flags
-  && R_PAPERSIZE=letter \
+  && R_PAPERSIZE=a4 \
     R_BATCHSAVE="--no-save --no-restore" \
     R_BROWSER=xdg-open \
     PAGER=/usr/bin/pager \
